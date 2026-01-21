@@ -1,28 +1,31 @@
-import { Processor, Process } from '@nestjs/bull';
-import type { Job } from 'bull';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import type { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { MatrixCalculatorService } from './matrix-calculator.service';
 import { KafkaProducerService } from '../kafka/kafka-producer.service';
 import { ConfigService } from '@nestjs/config';
-
-export interface MatrixJobData {
-  id: string;
-  matrixA: number[][];
-  matrixB: number[][];
-}
+import type { MatrixJobData } from './dto/matrix-job-data.dto';
 
 @Processor('matrix-queue')
-export class MatrixProcessor {
+export class MatrixProcessor extends WorkerHost {
   private readonly logger = new Logger(MatrixProcessor.name);
 
   constructor(
     private readonly matrixCalculator: MatrixCalculatorService,
     private readonly kafkaProducer: KafkaProducerService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process('multiply')
-  async handleMatrixMultiplication(job: Job<MatrixJobData>) {
+  async process(job: Job<MatrixJobData>) {
+    if (job.name !== 'multiply') {
+      this.logger.warn(
+        `Unknown job name "${job.name}" for job ${job.id ?? '(no id)'}`,
+      );
+      return;
+    }
+
     const { id, matrixA, matrixB } = job.data;
     this.logger.log(`Processing matrix multiplication job ${id}`);
 

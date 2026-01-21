@@ -9,8 +9,8 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
   private producer: Producer;
 
   constructor(private readonly configService: ConfigService) {
-    const broker = this.configService.get<string>('kafka.broker') || 'localhost:9092';
-    const clientId = this.configService.get<string>('kafka.clientId') || 'kafka-project2';
+    const broker = this.configService.get<string>('kafka.broker') as string;
+    const clientId = this.configService.get<string>('kafka.clientId') as string;
 
     this.kafka = new Kafka({
       clientId,
@@ -31,7 +31,7 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
     this.logger.log('Kafka Producer connected');
   }
 
-  private async connectWithRetry(maxRetries = 10, delay = 2000): Promise<void> {
+  private async connectWithRetry(maxRetries = 10, delay = 100): Promise<void> {
     for (let i = 0; i < maxRetries; i++) {
       try {
         await this.producer.connect();

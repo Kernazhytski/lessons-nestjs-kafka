@@ -9,9 +9,9 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
   private consumer: Consumer;
 
   constructor(private readonly configService: ConfigService) {
-    const broker = this.configService.get<string>('kafka.broker') || 'localhost:9092';
-    const clientId = this.configService.get<string>('kafka.clientId') || 'kafka-project2';
-    const groupId = this.configService.get<string>('kafka.groupId') || 'matrix-calculator-group';
+    const broker = this.configService.get<string>('kafka.broker') as string;
+    const clientId = this.configService.get<string>('kafka.clientId') as string;
+    const groupId = this.configService.get<string>('kafka.groupId') as string;
 
     this.kafka = new Kafka({
       clientId,

@@ -20,13 +20,13 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@nestjs/bull": "^11.0.4",
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11",
     "@nestjs/microservices": "^11",
     "@nestjs/platform-express": "^11",
-    "bull": "^4",
+    "bullmq": "^5",
     "class-transformer": "^0.5",
     "class-validator": "^0.14",
     "joi": "^17",
