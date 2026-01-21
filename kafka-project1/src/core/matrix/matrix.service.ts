@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaProducerService } from '../kafka/kafka-producer.service';
+import { KafkaConsumerService } from '../kafka/kafka-consumer.service';
 import { MatrixMultiplicationRequestDto } from './dto/matrix-multiplication.dto';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,14 +15,15 @@ interface MatrixResult {
 }
 
 @Injectable()
-export class MatrixService {
+export class MatrixService implements OnApplicationBootstrap {
   private readonly logger = new Logger(MatrixService.name);
   private results: Map<string, MatrixResult> = new Map();
 
   constructor(
     private readonly kafkaProducer: KafkaProducerService,
+    private readonly kafkaConsumer: KafkaConsumerService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async multiplyMatrices(
     matrixA: number[][],
@@ -98,6 +100,19 @@ export class MatrixService {
 
   getResultById(id: string): MatrixResult | undefined {
     return this.results.get(id);
+  }
+
+  async onApplicationBootstrap(): Promise<void> {
+    const responseTopic = this.configService.get<string>('kafka.responseTopic') as string;
+
+    try {
+      await this.kafkaConsumer.subscribe(responseTopic, (message) => {
+        this.handleResponse(message);
+      });
+      this.logger.log(`Subscribed to topic: ${responseTopic}`);
+    } catch (error) {
+      this.logger.error(`Failed to subscribe to topic ${responseTopic}:`, error);
+    }
   }
 }
 

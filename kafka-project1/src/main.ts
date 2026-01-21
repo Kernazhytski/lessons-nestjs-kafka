@@ -3,8 +3,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { MatrixService } from './core/matrix/matrix.service';
-import { KafkaConsumerService } from './core/kafka/kafka-consumer.service';
 import * as express from 'express';
 
 async function bootstrap() {
@@ -35,23 +33,6 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-
-  // Подписка на ответы от второго сервиса
-  const kafkaConsumer = app.get(KafkaConsumerService);
-  const matrixService = app.get(MatrixService);
-  const responseTopic = configService.get<string>('kafka.responseTopic') || 'matrix-multiplication-response';
-
-  // Ждем немного, чтобы Kafka полностью инициализировалась
-  await new Promise(resolve => setTimeout(resolve, 3000));
-
-  try {
-    await kafkaConsumer.subscribe(responseTopic, (message) => {
-      matrixService.handleResponse(message);
-    });
-    console.log(`Subscribed to topic: ${responseTopic}`);
-  } catch (error) {
-    console.error(`Failed to subscribe to topic ${responseTopic}:`, error);
-  }
 
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);
